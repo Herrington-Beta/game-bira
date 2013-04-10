@@ -1,0 +1,197 @@
+buffer 1 : picload "g/char.bmp"
+buffer 2 : picload "g/bg.bmp"
+buffer 3 : picload "g/bira.bmp"	
+
+screen 0,640,480 : title "【作者のコメント】ビラ配りの日、日差しが強かったね。" : gmode 2
+
+*main
+
+have=10 : stock=5
+cx=450 : cy=400
+second=60
+byecnt=0 : num=0 : value=0
+men=0 : women=0 : old=0
+
+dim p,100
+dim px,100 : dim py,100
+dim ph,100	//peopleはビラを持ったかどうか
+dim pb,100	//peopleが去ったかどうか
+
+repeat 100
+	p(cnt)=rnd(10)
+	px(cnt)=rnd(7)*100+700
+	py(cnt)=rnd(5)*50+100
+loop
+
+repeat
+	redraw 0 : color 0,0,0 : boxf 0,0,640,480
+	
+	pos 160,100 : color 255,255,255 : font "",50 : mes "本格的ビラ配り"
+	pos 160,350 : color 255,255,255 : font "",25 : mes "Enterキー押せよ、あくしろよ。"
+	
+	stick start,16+32
+	if start&16 | start&32 : break
+	
+	redraw 1 : await 30
+loop
+
+wait 10
+	
+repeat
+	redraw 0 : color 0,0,0 : boxf 0,0,640,480
+	
+	pos 140,100 : color 255,255,255 : font "",25 : mes "※操作方法は説明書を読んでね。"
+	pos 160,350 : color 255,255,255 : font "",25 : mes "Enterキー押せよ、あくしろよ。"
+	
+	stick start,16+32
+	if start&16 | start&32 : break
+	
+	redraw 1 : await 30
+loop
+	
+repeat
+	redraw 0 : color 0,0,0 : boxf 0,0,640,480
+	
+	pos 0,0 : gcopy 2,0,0,640,480
+	pos cx,cy : gcopy 1,0,0,50,50
+	repeat stock
+		pos 195+cnt*50,380 : gcopy 3,0,0,50,50
+	loop
+	
+	if cnt<30 { pos 300,200 : font "",40,2 : color 255,0,0 : mes "3" }
+	if cnt>=30 & cnt<60 { pos 300,200 : font "",40,2 : color 255,0,0 : mes "2" }
+	if cnt>=60 & cnt<90 { pos 300,200 : font "",40,2 : color 255,0,0 : mes "1" }
+	if cnt=90 : break
+	
+	redraw 1 : await 30
+loop
+
+repeat
+	redraw 0 : color 0,0,0 : boxf 0,0,640,480
+	
+	stick key,1+2+4+8+16
+	
+	gosub *mymoving
+	gosub *space
+	gosub *judge
+	gosub *background
+	gosub *status
+	gosub *time
+	gosub *mycharactor
+	gosub *people
+	gosub *okawari
+	
+	if second=0 : break
+	
+	redraw 1 : await 30
+loop
+
+repeat
+	redraw 0 : color 0,0,0 : boxf 0,0,640,480
+	
+	result=men+women
+	value_int=men+2*women-old
+	if value_int<10 : value="可"
+	if value_int>=10 & value_int<25 : value="良"
+	if value_int>=25 & value_int<40 : value="優"
+	if value_int>=40 & value_int<55 : value="秀"
+	if value_int>=55 : value="神"
+	if cnt>50 { pos 50,50 : font "",40,0 : color 255,255,255 : mes "あなたのビラ配りの結果…" }
+	if cnt>100 { pos 60,130 : font "",45,0 : color 0,0,255 : mes "男子が"+men+"人" }
+	if cnt>120 { pos 60,190 : font "",45,0 : color 255,0,0 : mes "女子が"+women+"人" }
+	if cnt>150 { pos 60,250 : font "",45,0 : color 255,255,255 : mes "新入生が"+result+"人入部しました" }
+	if cnt>170 { pos 500,400 : font "",50,0 : color 255,255,255 : mes ""+value+"("+value_int+")" }
+	if cnt>200 {
+		stick restart,16+32
+		if restart&16 | restart&32 : goto *main
+	}
+	
+	redraw 1 : await 30
+loop
+
+*mymoving
+	if key&1 { if deal=0 { cx=cx-10 } : if deal=1 { cx=cx-5 } : gosub *mywalking } : if cx<0 : cx=0
+	if key&4 { if deal=0 { cx=cx+10 } : if deal=1 { cx=cx+5 } : gosub *mywalking } : if cx>590 : cx=590
+	if key&2 { if deal=0 { cy=cy-10 } : if deal=1 { cy=cy-5 } : gosub *mywalking } : if cy<120 : cy=120
+	if key&8 { if deal=0 { cy=cy+10 } : if deal=1 { cy=cy+5 } : gosub *mywalking } : if cy>430 : cy=430
+	return
+	
+*space
+	if key&16 { if have>0 { deal=1 } } 
+	else { deal=0 }
+	return
+	
+*judge
+	if ( cx>150 & cx<450 ) & ( cy>350 & cy<400 ) & have=0 { stock-- : if stock<0 { stock=0 } : have=10 }
+	repeat 100
+		if abs(cx-px(cnt))<25 & abs(cy-py(cnt))<25 & have>0 & deal=1 & ph(cnt)=0 { 
+			have-- : ph(cnt)=1 
+			if p(cnt)<7 : men++
+			if p(cnt)>=7 & p(cnt)<9 : women++
+			if p(cnt)=9 : old++
+		}
+	loop
+	return
+
+*background
+	pos 0,0 : gcopy 2,0,0,640,480
+	return
+	
+*status
+	pos 5,5 : font "",15,0 : color 255,255,255 : mes "手に持ってるビラの枚数："+have+""
+	pos 5,25 : font "",15,0 : color 255,255,255 : mes "ブースに残っているビラの枚数："+10*stock+""
+	return
+	
+*time
+	if cnt>30*(61-second) : second--
+	pos 500,12 : font "",15,0 : color 255,255,255 : mes "TIME LIMIT"
+	pos 580,0 : font "",40,2 : color 255,0,0 : mes ""+second+""
+	return
+	
+*mycharactor
+	pos cx,cy
+	if deal=0 {
+		if walk=0 : gcopy 1,0,0,50,50
+		if walk=1 : gcopy 1,50,0,50,50
+		if walk=2 : gcopy 1,100,0,50,50
+	}
+	if deal=1 {
+		if walk=0 : gcopy 1,0,51,50,50
+		if walk=1 : gcopy 1,50,51,50,50
+		if walk=2 : gcopy 1,100,51,50,50
+		pos cx+51,cy : font "",15,0 : color 0,0,0 : mes "<ビラをどうぞ"
+	}
+	return
+	
+*mywalking
+	if walk=0 { walkcnt++ : if walkcnt=6 { walk=1 : walkcnt=0 } }
+	if walk=1 { walkcnt++ : if walkcnt=6 { walk=2 : walkcnt=0 } }
+	if walk=2 { walkcnt++ : if walkcnt=6 { walk=0 : walkcnt=0 } }	
+	return
+	
+*people
+	repeat 19
+	if byecnt>=5*cnt & byecnt<5*(cnt+1) {
+		num=5*cnt
+		repeat 5
+			pos px(cnt+num),py(cnt+num)
+			px(cnt+num)=px(cnt+num)-10
+			if p(cnt+num)>=0 & p(cnt+num)<7 : gcopy 1,0,100,50,50
+			if p(cnt+num)>=7 & p(cnt+num)<9 : gcopy 1,50,100,50,50
+			if p(cnt+num)=9 : gcopy 1,100,100,50,50
+			if ph(cnt+num)=1 {
+				pos px(cnt+num),py(cnt+num)-20 : color 0,0,0 : font "",20,1
+				if p(cnt+num)<9 : mes "Thanks!"
+				if p(cnt+num)=9 : mes "は？（威圧）"
+			}
+			if px(cnt+num)<-50 & pb(cnt+num)=0 { byecnt++ : pb(cnt+num)=1 }
+		loop
+	}
+	loop
+	return
+	
+*okawari
+	repeat stock
+		pos 195+cnt*50,380 : gcopy 3,0,0,50,50
+	loop
+	return
