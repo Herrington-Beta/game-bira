@@ -10,18 +10,21 @@ have=10 : stock=5
 cx=450 : cy=400
 second=60
 byecnt=0 : num=0 : value=0
-men=0 : women=0 : old=0
+ikemen=0 : spd=10 : tx=640 : ty=200
+men=0 : women=0 : old=0 : result=0
 
 dim p,100
 dim px,100 : dim py,100
-dim ph,100	//peopleはビラを持ったかどうか
-dim pb,100	//peopleが去ったかどうか
+dim ph,100
+dim pb,100
 
 repeat 100
 	p(cnt)=rnd(10)
 	px(cnt)=rnd(7)*100+700
 	py(cnt)=rnd(5)*50+100
 loop
+
+wait 10
 
 repeat
 	redraw 0 : color 0,0,0 : boxf 0,0,640,480
@@ -75,9 +78,11 @@ repeat
 	gosub *space
 	gosub *judge
 	gosub *background
+	gosub *banana
 	gosub *status
 	gosub *time
 	gosub *mycharactor
+	gosub *ikemenmode
 	gosub *people
 	gosub *okawari
 	
@@ -96,6 +101,7 @@ repeat
 	if value_int>=25 & value_int<40 : value="優"
 	if value_int>=40 & value_int<55 : value="秀"
 	if value_int>=55 : value="神"
+	if cnt<=50 { pos 250,200 : font "",40,0 : color 255,255,255 : mes "終　了　！" }
 	if cnt>50 { pos 50,50 : font "",40,0 : color 255,255,255 : mes "あなたのビラ配りの結果…" }
 	if cnt>100 { pos 60,130 : font "",45,0 : color 0,0,255 : mes "男子が"+men+"人" }
 	if cnt>120 { pos 60,190 : font "",45,0 : color 255,0,0 : mes "女子が"+women+"人" }
@@ -122,9 +128,12 @@ loop
 	return
 	
 *judge
-	if ( cx>150 & cx<450 ) & ( cy>350 & cy<400 ) & have=0 { stock-- : if stock<0 { stock=0 } : have=10 }
+	if ( cx>150 & cx<450 ) & ( cy>350 & cy<400 ) & have<10 & stock>0 { 
+		stock-- : if stock<0 { stock=0 }
+		have=10
+	}
 	repeat 100
-		if abs(cx-px(cnt))<25 & abs(cy-py(cnt))<25 & have>0 & deal=1 & ph(cnt)=0 { 
+		if abs(cx-px(cnt))<25 & (cy-py(cnt))>-25 & (cy-py(cnt))<=50 & have>0 & deal=1 & ph(cnt)=0 { 
 			have-- : ph(cnt)=1 
 			if p(cnt)<7 : men++
 			if p(cnt)>=7 & p(cnt)<9 : women++
@@ -135,6 +144,9 @@ loop
 
 *background
 	pos 0,0 : gcopy 2,0,0,640,480
+	return
+	
+*banana
 	return
 	
 *status
@@ -161,6 +173,16 @@ loop
 		if walk=2 : gcopy 1,100,51,50,50
 		pos cx+51,cy : font "",15,0 : color 0,0,0 : mes "<ビラをどうぞ"
 	}
+	if ikemen=1 { pos cx,cy : gcopy 1,100,150,50,50 }
+	return
+	
+*ikemenmode
+	if old>=2 : ikemen=1
+	if ikemen=1 {
+		tx=tx-6
+		pos tx,ty : font "",50 : color rnd(256),rnd(256),rnd(256) : mes "ハイパーイケメンモード"
+		spd=5
+	}
 	return
 	
 *mywalking
@@ -175,13 +197,12 @@ loop
 		num=5*cnt
 		repeat 5
 			pos px(cnt+num),py(cnt+num)
-			px(cnt+num)=px(cnt+num)-10
-			if p(cnt+num)>=0 & p(cnt+num)<7 : gcopy 1,0,100,50,50
-			if p(cnt+num)>=7 & p(cnt+num)<9 : gcopy 1,50,100,50,50
-			if p(cnt+num)=9 : gcopy 1,100,100,50,50
+			if p(cnt+num)>=0 & p(cnt+num)<7 { px(cnt+num)=px(cnt+num)-10 : gcopy 1,0,100,50,50 }
+			if p(cnt+num)>=7 & p(cnt+num)<9 { px(cnt+num)=px(cnt+num)-spd : gcopy 1,50,100,50,50 }
+			if p(cnt+num)=9 { px(cnt+num)=px(cnt+num)-10 : gcopy 1,100,100,50,50 }
 			if ph(cnt+num)=1 {
 				pos px(cnt+num),py(cnt+num)-20 : color 0,0,0 : font "",20,1
-				if p(cnt+num)<9 : mes "Thanks!"
+				if p(cnt+num)<9 { mes "Thanks!" : pos px(cnt+num),py(cnt+num) : gcopy 1,0,150,50,50 }
 				if p(cnt+num)=9 : mes "は？（威圧）"
 			}
 			if px(cnt+num)<-50 & pb(cnt+num)=0 { byecnt++ : pb(cnt+num)=1 }
